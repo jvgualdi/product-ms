@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: product-ms
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/product
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    queue: ${queue.name}
+
+server:
+  port: 0
+  error:
+    include-stacktrace: never
+
+eureka:
+  client:
+    serviceUrl:
+        defaultZone: http://localhost:8087/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:12345678}
+
+logging:
+    level:
+        org.springframework.security: DEBUG
+        org.springframework.boot: INFO
+        org.hibernate.SQL: DEBUG
+
+aws:
+    s3:
+        bucket: ${AWS_S3_BUCKET}
+        region: ${AWS_REGION}
+        access-key: ${AWS_ACCESS_KEY}
+        secret-key: ${AWS_SECRET_KEY}
