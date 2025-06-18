@@ -42,6 +42,14 @@ public class ProductService {
         return products.map(productMapper::toResponse);
     }
 
-
+    public ProductResponse updateProduct(UUID id, ProductRegisterRequest productRegister, List<String> imageUrls) {
+        var product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        var updatedProduct = productMapper.toEntity(productRegister);
+        updatedProduct.setImageUrl(imageUrls);
+        updatedProduct.setActive(updatedProduct.getPrice().compareTo(new BigDecimal("0.0")) > 0 && updatedProduct.getStock() > 0);
+        product = productRepository.save(product);
+        return productMapper.toResponse(product);
+    }
 
 }
