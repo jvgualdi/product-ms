@@ -1,51 +1,42 @@
 package tec.jvgualdi.product_ms.service;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import tec.jvgualdi.product_ms.exceptions.StorageException;
+import tec.jvgualdi.product_ms.ports.StoragePort;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class ImageStorageService {
 
-    private final AmazonS3 s3;
-    private final String bucket;
+    private final StoragePort storagePort;
 
-    public ImageStorageService(AmazonS3 s3,
-                               @Value("${aws.s3.bucket}") String bucket) {
-        this.s3 = s3;
-        this.bucket = bucket;
+    public ImageStorageService(StoragePort storagePort) {
+        this.storagePort = storagePort;
     }
 
-    public List<String> uploadAll(List<MultipartFile> files) {
-        if (files == null) return List.of();
-        return files.stream()
-                .map(this::uploadOne)
+    public List<String> uploadAll(List<MultipartFile> images) {
+        return images.stream()
+                .map(this::uploadImage)
                 .toList();
     }
 
-    public String uploadOne(MultipartFile file) {
-        String key = UUID.randomUUID() + "-" + file.getOriginalFilename();
-        try (InputStream in = file.getInputStream()) {
-            s3.putObject(bucket, key, in, buildMetadata(file));
-        } catch (IOException e) {
-            throw new StorageException("Failed to send " + file.getOriginalFilename(), e);
+    private String uploadImage(MultipartFile image) {
+        if (image == null ){
+            throw new StorageException("Image file cannot be null");
         }
-        return s3.getUrl(bucket, key).toString();
-    }
-
-    private ObjectMetadata buildMetadata(MultipartFile file) {
-        ObjectMetadata md = new ObjectMetadata();
-        md.setContentLength(file.getSize());
-        md.setContentType(file.getContentType());
-        return md;
+        try {
+            return storagePort.uploadFile(
+                    image.getBytes(),
+                    UUID.randomUUID() + "-" + image.getOriginalFilename(),
+                    image.getContentType()
+            );
+        } catch(IOException e){
+            throw new RuntimeException("Falha ao ler imagem", e);
+        }
     }
 
 }

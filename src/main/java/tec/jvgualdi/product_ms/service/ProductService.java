@@ -43,13 +43,19 @@ public class ProductService {
     }
 
     public ProductResponse updateProduct(UUID id, ProductRegisterRequest productRegister, List<String> imageUrls) {
-        var product = productRepository.findById(id)
+        var existing = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
-        var updatedProduct = productMapper.toEntity(productRegister);
-        updatedProduct.setImageUrl(imageUrls);
-        updatedProduct.setActive(updatedProduct.getPrice().compareTo(new BigDecimal("0.0")) > 0 && updatedProduct.getStock() > 0);
-        product = productRepository.save(product);
-        return productMapper.toResponse(product);
+
+        existing.setTitle(productRegister.title());
+        existing.setDescription(productRegister.description());
+        existing.setPrice(productRegister.price());
+        existing.setStock(productRegister.stock());
+        existing.setCategory(productRegister.category());
+        existing.setImageUrl(imageUrls);
+        existing.setActive(productRegister.price().compareTo(BigDecimal.ZERO) > 0 && productRegister.stock() > 0);
+
+        var saved = productRepository.save(existing);
+        return productMapper.toResponse(saved);
     }
 
 }
